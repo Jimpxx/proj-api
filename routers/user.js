@@ -24,16 +24,6 @@ router.post('/register', async (req, res) => {
         .catch(err => {
             return res.status(500).send();
         });
-
-    // Create a new user
-    // try {
-    //     const user = new User(req.body);
-    //     await user.save();
-    //     const token = await user.generateAuthToken();
-    //     res.status(201).send({ user, token });
-    // } catch (error) {
-    //     res.status(400).send(error);
-    // }
 });
 
 router.post('/login', async (req, res) => {
@@ -50,35 +40,57 @@ router.post('/login', async (req, res) => {
     }
 
     const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET);
-    // user.tokens = user.tokens.concat({ token });
 
     return res.status(200).send({ user, token });
-
-    // try {
-    //     const { email, password } = req.body;
-    //     // const email = req.body.email;
-    //     // const password = req.body.password;
-    //     console.log('Before');
-    //     const user = await User.findByCredentials(email, password);
-    //     console.log('after');
-    //     if (!user) {
-    //         return res
-    //             .status(401)
-    //             .send({ error: 'Login failed! Check authentication credentials' });
-    //     }
-    //     const token = await user.generateAuthToken();
-    //     res.send({ user, token });
-    // } catch (error) {
-    //     res.status(400).send(error);
-    // }
 });
 
-router.post('/deposit', async (req, res) => {
-    console.log(req.body);
-    const email = req.body.email;
-    const amount = req.body.amount;
-    const user = await User.makeDeposit(email, amount);
-    return res.status(200).send(user);
-});
+router.post(
+    '/deposit',
+    (req, res, next) => checkToken(req, res, next),
+    async (req, res) => {
+        console.log(req.body);
+        const email = req.body.email;
+        const amount = req.body.amount;
+        const user = await User.makeDeposit(email, amount);
+        return res.status(200).send(user);
+    },
+);
+
+router.post(
+    '/order',
+    (req, res, next) => checkToken(req, res, next),
+    async (req, res) => {
+        console.log(req.body);
+        const email = req.body.email;
+        const type = req.body.type;
+        const company = req.body.company;
+        const price = req.body.price;
+        const amount = req.body.amount;
+        const user = await User.makeOrder(email, type, company, price, amount);
+        return res.status(200).send(user);
+    },
+);
+
+function checkToken(req, res, next) {
+    const token = req.headers['x-access-token'];
+
+    jwt.verify(token, process.env.JWT_SECRET, function(err, decoded) {
+        if (err) {
+            // send error response
+            console.log('Token INVALID');
+            return res.status(500).json({
+                errors: {
+                    status: 500,
+                    source: '/reports',
+                    title: 'JWT Error',
+                    detail: err.message,
+                },
+            });
+        }
+        console.log('Token valid!');
+        // Valid token send on the request
+        next();
+    });
+}
 
 module.exports = router;

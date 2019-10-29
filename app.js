@@ -5,18 +5,12 @@ const bodyParser = require('body-parser');
 const stock = require('./models/stock');
 
 const port = 3333;
-// const mongoose = require('mongoose');
 
 // Importing routerfiles
 const userRouter = require('./routers/user');
 
 const app = express();
 
-// mongoose.connect('mongodb://localhost:27017/trading', {
-//     useNewUrlParser: true,
-//     useCreateIndex: true,
-//     useUnifiedTopology: true,
-// });
 require('./db/db');
 
 // app.use(express.json());
@@ -37,32 +31,38 @@ app.use(bodyParser.urlencoded({ extended: true })); // for parsing application/x
 // Routes!
 app.use('/user', userRouter);
 
-// const ioPort = 3344;
-
 const server = require('http').Server(app);
 
 const io = require('socket.io')(server);
 
 const companies = [
     {
-        name: 'Volvo',
-        price: [20],
-        borderColor: ['#ddd'],
+        label: 'Volvo',
+        data: [20],
+        borderColor: ['#0000cd'],
         borderWidth: 3,
         rate: 1.002,
         variance: 0.6,
     },
     {
-        name: 'Saab',
-        price: [20],
-        borderColor: ['#4e3'],
+        label: 'Saab',
+        data: [20],
+        borderColor: ['#f51010'],
         borderWidth: 3,
         rate: 1.001,
         variance: 0.4,
     },
+    {
+        label: 'Tesla',
+        data: [20],
+        borderColor: ['#00ff00'],
+        borderWidth: 3,
+        rate: 1.003,
+        variance: 0.7,
+    },
 ];
 
-// io.origins(['http://localhost']);
+// Uncomment when in production
 // io.origins(['https://jimmyandersson.me:443']);
 
 io.on('connection', function(socket) {
@@ -74,9 +74,9 @@ io.on('connection', function(socket) {
 
 setInterval(function() {
     companies.map(company => {
-        company.price.push(stock.getStockPrice(company));
-        if (company.price.length > 20) {
-            company.price.shift();
+        company.data.push(stock.getStockPrice(company));
+        if (company.data.length > 20) {
+            company.data.shift();
         }
         return company;
     });
@@ -89,9 +89,5 @@ setInterval(function() {
 server.listen(port, () => {
     console.log(`Server running on port ${port}`);
 });
-
-// app.listen(port, () => {
-//     console.log(`Server running on port ${port}`);
-// });
 
 module.exports = server;

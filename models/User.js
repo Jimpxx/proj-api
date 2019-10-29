@@ -9,47 +9,28 @@ dotenv.config();
 const userSchema = new mongoose.Schema({
     name: {
         type: String,
-        // required: true,
-        // trim: true,
     },
     email: {
         type: String,
-        // required: true,
-        // unique: true,
-        // lowercase: true,
-        // validate: value => {
-        //     if (!validator.isEmail(value)) {
-        //         throw new Error({ error: 'Invalid Email address' });
-        //     }
-        // },
     },
     password: {
         type: String,
-        // required: true,
-        // minLength: 7,
     },
     birthday: {
         type: String,
-        // required: true,
-        // minLength: 7,
     },
     money: {
         type: Number,
         default: 0,
         min: 0,
     },
-    holdings: {
-        type: Array,
-        default: [],
-    },
-    // tokens: [
-    //     {
-    //         token: {
-    //             type: String,
-    //             required: true,
-    //         },
-    //     },
-    // ],
+    holdings: [
+        {
+            name: String,
+            amount: Number,
+            buyin: Number,
+        },
+    ],
 });
 
 userSchema.pre('save', async function(next) {
@@ -61,17 +42,7 @@ userSchema.pre('save', async function(next) {
     next();
 });
 
-// userSchema.methods.makeDeposit = async function(amount) {
-//     // Generate an auth token for the user
-//     const user = this;
-//     await User
-//     await user.save();
-//     return user;
-// };
-
 userSchema.statics.makeDeposit = async (email, amount) => {
-    // Search for a user by email and password.
-    // await User.
     const user = await User.findOne({ email });
     if (!user) {
         throw new Error({ error: 'No user' });
@@ -83,27 +54,58 @@ userSchema.statics.makeDeposit = async (email, amount) => {
     return user;
 };
 
-// userSchema.methods.generateAuthToken = async function() {
-//     // Generate an auth token for the user
-//     const user = this;
-//     const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET);
-//     user.tokens = user.tokens.concat({ token });
-//     await user.save();
-//     return token;
-// };
+userSchema.statics.makeOrder = async (email, type, company, price, amount) => {
+    price = parseFloat(price);
+    amount = Number(amount);
+    console.log(price);
+    console.log(amount);
+    const user = await User.findOne({ email });
+    if (!user) {
+        throw new Error({ error: 'No user' });
+    }
+    if (type == 'buy' && user.money < price * amount) {
+        return res.status(500).send({ message: 'Not enough money available on the account' });
+    }
 
-// userSchema.statics.findByCredentials = async (email, password) => {
-//     // Search for a user by email and password.
-//     const user = await User.findOne({ email });
-//     if (!user) {
-//         throw new Error({ error: 'Invalid login credentials' });
-//     }
-//     const isPasswordMatch = await bcrypt.compare(password, user.password);
-//     if (!isPasswordMatch) {
-//         throw new Error({ error: 'Invalid login credentials' });
-//     }
-//     return user;
-// };
+    let found = false;
+    user.holdings.forEach(stock => {
+        if (stock.name == company) {
+            if (type == 'sell' && stock.amount < 1) {
+                return res
+                    .status(500)
+                    .send({ message: 'You have no stocks in this company to sell' });
+            }
+            if (type == 'buy') {
+                stock.amount += amount;
+                stock.buyin += price * amount;
+                user.money -= price * amount;
+            }
+            if (type == 'sell') {
+                stock.amount -= amount;
+                stock.buyin -= price * amount;
+                user.money += price * amount;
+            }
+
+            found = true;
+        }
+    });
+    if (!found && type == 'buy') {
+        user.holdings.push({
+            name: company,
+            amount: amount,
+            buyin: price * amount,
+        });
+        user.money -= price * amount;
+    }
+
+    user.holdings = user.holdings.filter(stock => {
+        return stock.amount > 0;
+    });
+
+    user.save();
+
+    return user;
+};
 
 const User = mongoose.model('User', userSchema);
 

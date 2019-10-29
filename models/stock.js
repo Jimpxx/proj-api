@@ -4,11 +4,11 @@ var stock = {
     },
 
     getStockPrice: function(input) {
-        let start = input.price[input.price.length - 1];
+        let start = input.data[input.data.length - 1];
         let rate = input.rate;
         let variance = input.variance;
 
-        return start * rate + variance * stock.randomAroundZero();
+        return Math.round((start * rate + variance * stock.randomAroundZero()) * 100) / 100;
     },
 };
 
