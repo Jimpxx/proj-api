@@ -4,7 +4,7 @@ const morgan = require('morgan');
 const bodyParser = require('body-parser');
 const stock = require('./models/stock');
 
-const port = 3333;
+const port = 1338;
 
 // Importing routerfiles
 const userRouter = require('./routers/user');
@@ -63,7 +63,7 @@ const companies = [
 ];
 
 // Uncomment when in production
-// io.origins(['https://jimmyandersson.me:443']);
+io.origins(['https://project.jimmyandersson.me:443']);
 
 io.on('connection', function(socket) {
     console.log('user connected');
