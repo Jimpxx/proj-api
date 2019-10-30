@@ -8,6 +8,12 @@ var stock = {
         let rate = input.rate;
         let variance = input.variance;
 
+        if (start > 100) {
+            start -= 1;
+        } else if (start < 5) {
+            start += 1;
+        }
+
         return Math.round((start * rate + variance * stock.randomAroundZero()) * 100) / 100;
     },
 };
