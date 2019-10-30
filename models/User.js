@@ -56,8 +56,8 @@ userSchema.statics.makeDeposit = async (email, amount) => {
 userSchema.statics.makeOrder = async (email, type, company, price, amount) => {
     price = parseFloat(price);
     amount = Number(amount);
-    console.log(price);
-    console.log(amount);
+    // console.log(price);
+    // console.log(amount);
     const user = await User.findOne({ email });
     if (!user) {
         throw new Error({ error: 'No user' });

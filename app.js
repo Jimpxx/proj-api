@@ -81,7 +81,7 @@ setInterval(function() {
         return company;
     });
 
-    console.log(companies);
+    // console.log(companies);
 
     io.emit('stocks', companies);
 }, 5000);
